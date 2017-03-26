@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+const DRAW_STATUS = 'DRAW';
+
 class TicTacToeBoard extends Component {
   constructor(props) {
     super(props);
@@ -11,9 +13,12 @@ class TicTacToeBoard extends Component {
         '', '', '', '', '', '', '', '', '',
       ],
       winner: null,
+      winningCombo: [],
     };
 
     this.handleClick = this.handleClick.bind(this);
+    this.handleResetGame = this.handleResetGame.bind(this);
+    this.handleSelectPlayer = this.handleSelectPlayer.bind(this);
   }
 
   handleClick(index) {
@@ -60,24 +65,77 @@ class TicTacToeBoard extends Component {
     ));
 
     if (winningCombo) {
+      this.setState({
+        winningCombo,
+      });
       return currentTurn;
     }
+    const isNotDraw = this.state.board.find(cell => cell === '');
+    if (isNotDraw !== '') {
+      return DRAW_STATUS;
+    }
+
     return false;
   }
 
+  winnerComboHighlight(index) {
+    if (this.state.winner === null) { return ''; }
+    const winningCell = this.state.winningCombo.find(position => position === index);
+    if (winningCell !== undefined) {
+      return 'winning-cell';
+    }
+    return '';
+  }
+
+  handleResetGame() {
+    this.setState({
+      board: [
+        '', '', '', '', '', '', '', '', '',
+      ],
+      winner: null,
+      winningCombo: [],
+    });
+  }
+
+  handleSelectPlayer(player) {
+    this.setState({
+      currentTurn: player,
+    });
+  }
+
+  gameResults() {
+    const { winner, PLAYER_ONE_SYMBOL, PLAYER_TWO_SYMBOL } = this.state;
+    switch (winner) {
+      case PLAYER_ONE_SYMBOL:
+      case PLAYER_TWO_SYMBOL:
+        return <h1>The winner is: {winner}</h1>;
+      case DRAW_STATUS:
+        return <h1>{winner}!</h1>;
+      default:
+        return null;
+    }
+  }
+
   render() {
-    const { board, winner } = this.state;
+    const { board, winner, PLAYER_ONE_SYMBOL, PLAYER_TWO_SYMBOL } = this.state;
     return (
       <div className="app-container">
-        {winner ? <h1>The winner is: {winner}</h1> : null}
+        {this.gameResults()}
         <div className="board">
           {board.map((cell, index) => (
             <div
               key={index}
               onClick={() => this.handleClick(index)}
-              className="square"
+              className={`square ${this.winnerComboHighlight(index)}`}
             >{cell}</div>
           ))}
+        </div>
+        <div className="controls">
+          <button onClick={this.handleResetGame}>Reset Game</button>
+          <div className="select-player">
+            <button onClick={() => this.handleSelectPlayer(PLAYER_ONE_SYMBOL)}>{PLAYER_ONE_SYMBOL}</button>
+            <button onClick={() => this.handleSelectPlayer(PLAYER_TWO_SYMBOL)}>{PLAYER_TWO_SYMBOL}</button>
+          </div>
         </div>
       </div>
     );

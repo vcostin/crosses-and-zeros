@@ -1,8 +1,15 @@
 <html>
 
 <head>
-  <title>React Hot Loader Minimal Boilerplate</title>
+  <title>Crosses and Zeros</title>
   <style>
+    .app-container {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      flex-wrap: nowrap;
+    }
+
     .board {
       display: flex;
       width: 450px;
@@ -27,6 +34,15 @@
     .square:hover {
       cursor: pointer;
       background-color: #80cd92;
+    }
+
+    .winning-cell {
+      border-color: crimson;
+    }
+
+    .app-container {
+      justify-content: left;
+      align-items: left;
     }
   </style>
 </head>
