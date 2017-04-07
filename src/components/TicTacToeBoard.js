@@ -1,16 +1,19 @@
 import React, { Component } from 'react';
 
 const DRAW_STATUS = 'DRAW';
+const [SYMBOL_X, SYMBOL_O] = ['X', 'O'];
 
 class TicTacToeBoard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      PLAYER_ONE_SYMBOL: 'X',
-      PLAYER_TWO_SYMBOL: 'O',
-      currentTurn: 'X',
+      currentTurn: SYMBOL_X,
+      maxPlayer: SYMBOL_X,
+      minPlayer: SYMBOL_O,
       board: [
-        '', '', '', '', '', '', '', '', '',
+        '', '', '',
+        '', '', '',
+        '', '', '',
       ],
       winner: null,
       winningCombo: [],
@@ -19,28 +22,49 @@ class TicTacToeBoard extends Component {
     this.handleClick = this.handleClick.bind(this);
     this.handleResetGame = this.handleResetGame.bind(this);
     this.handleSelectPlayer = this.handleSelectPlayer.bind(this);
+    // this.findAiMove = this.findAiMove.bind(this);
+  }
+
+  componentWillMount() {
+    this.setState({
+      winner: this.checkForWinner(),
+    });
   }
 
   handleClick(index) {
     const {
       board,
       currentTurn,
-      PLAYER_ONE_SYMBOL,
-      PLAYER_TWO_SYMBOL,
       winner,
     } = this.state;
 
-    if (winner) { return; }
-    if (board[index] !== '') { return; }
+    if (winner) {
+      return;
+    }
+    if (board[index] !== '') {
+      return;
+    }
 
     board[index] = currentTurn;
     this.setState({
       winner: this.checkForWinner(),
-      board: this.state.board,
-      currentTurn: currentTurn === PLAYER_ONE_SYMBOL
-        ? PLAYER_TWO_SYMBOL
-        : PLAYER_ONE_SYMBOL,
+      board: [...this.state.board],
+      currentTurn: currentTurn === SYMBOL_X
+        ? SYMBOL_O
+        : SYMBOL_X,
     });
+
+    // AI MOVE
+    console.log(this.findAiMove(this.state.board));
+    // board[this.findAiMove(this.state.board)] = currentTurn;
+    // this.setState({
+    //   winner: this.checkForWinner(),
+    //   board: [...this.state.board],
+    //   currentTurn: currentTurn === SYMBOL_X
+    //     ? SYMBOL_O
+    //     : SYMBOL_X,
+    // });
+    // gameBoard[findAiMove(gameBoard)] = 'o';
   }
 
   checkForWinner() {
@@ -75,11 +99,13 @@ class TicTacToeBoard extends Component {
       return DRAW_STATUS;
     }
 
-    return false;
+    return null;
   }
 
   winnerComboHighlight(index) {
-    if (this.state.winner === null) { return ''; }
+    if (this.state.winner === null) {
+      return '';
+    }
     const winningCell = this.state.winningCombo.find(position => position === index);
     if (winningCell !== undefined) {
       return 'winning-cell';
@@ -90,10 +116,14 @@ class TicTacToeBoard extends Component {
   handleResetGame() {
     this.setState({
       board: [
-        '', '', '', '', '', '', '', '', '',
+        '', '', '',
+        '', '', '',
+        '', '', '',
       ],
       winner: null,
       winningCombo: [],
+      maxPlayer: SYMBOL_X,
+      minPlayer: SYMBOL_O,
     });
   }
 
@@ -104,10 +134,10 @@ class TicTacToeBoard extends Component {
   }
 
   gameResults() {
-    const { winner, PLAYER_ONE_SYMBOL, PLAYER_TWO_SYMBOL } = this.state;
+    const { winner } = this.state;
     switch (winner) {
-      case PLAYER_ONE_SYMBOL:
-      case PLAYER_TWO_SYMBOL:
+      case SYMBOL_X:
+      case SYMBOL_O:
         return <h1>The winner is: {winner}</h1>;
       case DRAW_STATUS:
         return <h1>{winner}!</h1>;
@@ -116,8 +146,95 @@ class TicTacToeBoard extends Component {
     }
   }
 
+
+  // Create a new version of the board to manipulate as a node on the tree
+  copyBoard(board) {
+    // This returns a new copy of the Board and ensures that you're only
+    // manipulating the copies and not the primary board.
+    return [...board];
+  }
+
+  // Determine if a move is valid and return the new board state
+  validMove(move, player, board) {
+    const newBoard = this.copyBoard(board);
+    if (newBoard[move] === '') {
+      newBoard[move] = player;
+      return [...newBoard];
+    }
+    return null;
+  }
+
+  // This is the main AI function which selects the first position that
+  // provides a winning result (or tie if no win possible)
+
+  findAiMove(board) {
+    let bestMoveScore = 100;
+    let move = null;
+    // Test Every Possible Move if the game is not already over.
+    if (this.checkForWinner()) {
+      return null;
+    }
+    for (let i = 0; i < board.length; i += 1) {
+      const newBoard = this.validMove(i, this.state.minPlayer, board);
+      // If validMove returned a valid game board
+      if (newBoard) {
+        const moveScore = this.maxScore(newBoard);
+        if (moveScore < bestMoveScore) {
+          bestMoveScore = moveScore;
+          move = i;
+        }
+      }
+    }
+    return move;
+  }
+
+  maxScore(board) {
+    if (this.checkForWinner() === this.state.maxPlayer) {
+      return 10;
+    } else if (this.checkForWinner() === this.state.minPlayer) {
+      return -10;
+    } else if (this.checkForWinner() === DRAW_STATUS) {
+      return 0;
+    }
+    let bestMoveValue = -100;
+    for (let i = 0; i < board.length; i += 1) {
+      const newBoard = this.validMove(i, this.state.maxPlayer, board);
+      if (newBoard) {
+        const predictedMoveValue = this.minScore(newBoard);
+        if (predictedMoveValue > bestMoveValue) {
+          bestMoveValue = predictedMoveValue;
+        }
+      }
+    }
+    return bestMoveValue;
+  }
+
+  minScore(board) {
+    if (this.checkForWinner() === this.state.maxPlayer) {
+      return 10;
+    } else if (this.checkForWinner() === this.state.minPlayer) {
+      return -10;
+    } else if (this.checkForWinner() === DRAW_STATUS) {
+      return 0;
+    }
+    let bestMoveValue = 100;
+    for (let i = 0; i < board.length; i += 1) {
+      const newBoard = this.validMove(i, this.state.minPlayer, board);
+      if (newBoard) {
+        debugger;
+        const predictedMoveValue = this.maxScore(newBoard);
+        if (predictedMoveValue < bestMoveValue) {
+          bestMoveValue = predictedMoveValue;
+        }
+      }
+    }
+    // console.log('Best Move Value(minScore):', bestMoveValue);
+    return bestMoveValue;
+  }
+
+
   render() {
-    const { board, winner, PLAYER_ONE_SYMBOL, PLAYER_TWO_SYMBOL } = this.state;
+    const { board } = this.state;
     return (
       <div className="app-container">
         {this.gameResults()}
@@ -133,8 +250,8 @@ class TicTacToeBoard extends Component {
         <div className="controls">
           <button onClick={this.handleResetGame}>Reset Game</button>
           <div className="select-player">
-            <button onClick={() => this.handleSelectPlayer(PLAYER_ONE_SYMBOL)}>{PLAYER_ONE_SYMBOL}</button>
-            <button onClick={() => this.handleSelectPlayer(PLAYER_TWO_SYMBOL)}>{PLAYER_TWO_SYMBOL}</button>
+            <button onClick={() => this.handleSelectPlayer(SYMBOL_X)}>{SYMBOL_X}</button>
+            <button onClick={() => this.handleSelectPlayer(SYMBOL_O)}>{SYMBOL_O}</button>
           </div>
         </div>
       </div>
