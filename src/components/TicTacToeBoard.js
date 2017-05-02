@@ -7,7 +7,6 @@ class TicTacToeBoard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentTurn: SYMBOL_X,
       maxPlayer: SYMBOL_X,
       minPlayer: SYMBOL_O,
       board: [
@@ -27,48 +26,41 @@ class TicTacToeBoard extends Component {
 
   componentWillMount() {
     this.setState({
-      winner: this.checkForWinner(),
+      winner: this.checkForWinner([...this.state.board]),
     });
   }
 
   handleClick(index) {
     const {
       board,
-      currentTurn,
       winner,
+      maxPlayer,
+      minPlayer,
     } = this.state;
 
     if (winner) {
       return;
     }
-    if (board[index] !== '') {
+    const boardCopy = [...board];
+    if (boardCopy[index] !== '') {
       return;
     }
 
-    board[index] = currentTurn;
+    boardCopy[index] = maxPlayer;
     this.setState({
-      winner: this.checkForWinner(),
-      board: [...this.state.board],
-      currentTurn: currentTurn === SYMBOL_X
-        ? SYMBOL_O
-        : SYMBOL_X,
+      winner: this.checkForWinner(boardCopy),
+      board: [...boardCopy],
     });
 
     // AI MOVE
-    console.log(this.findAiMove(this.state.board));
-    // board[this.findAiMove(this.state.board)] = currentTurn;
-    // this.setState({
-    //   winner: this.checkForWinner(),
-    //   board: [...this.state.board],
-    //   currentTurn: currentTurn === SYMBOL_X
-    //     ? SYMBOL_O
-    //     : SYMBOL_X,
-    // });
-    // gameBoard[findAiMove(gameBoard)] = 'o';
+    boardCopy[this.findAiMove(boardCopy)] = minPlayer;
+    this.setState({
+      winner: this.checkForWinner(boardCopy),
+      board: [...boardCopy],
+    });
   }
 
-  checkForWinner() {
-    const { board, currentTurn } = this.state;
+  checkForWinner(board) {
     const winningCombos = [
       [0, 1, 2],
       [3, 4, 5],
@@ -92,10 +84,13 @@ class TicTacToeBoard extends Component {
       this.setState({
         winningCombo,
       });
-      return currentTurn;
+      return board[winningCombo[0]];
     }
-    const isNotDraw = this.state.board.find(cell => cell === '');
-    if (isNotDraw !== '') {
+    const searchEmptyCell = board.find(cell => cell === '');
+    if (searchEmptyCell !== '') {
+      this.setState({
+        winningCombo: [],
+      });
       return DRAW_STATUS;
     }
 
@@ -171,7 +166,7 @@ class TicTacToeBoard extends Component {
     let bestMoveScore = 100;
     let move = null;
     // Test Every Possible Move if the game is not already over.
-    if (this.checkForWinner()) {
+    if (this.checkForWinner(board)) {
       return null;
     }
     for (let i = 0; i < board.length; i += 1) {
@@ -189,11 +184,12 @@ class TicTacToeBoard extends Component {
   }
 
   maxScore(board) {
-    if (this.checkForWinner() === this.state.maxPlayer) {
+    const winnerCheck = this.checkForWinner(board);
+    if (winnerCheck === this.state.maxPlayer) {
       return 10;
-    } else if (this.checkForWinner() === this.state.minPlayer) {
+    } else if (winnerCheck === this.state.minPlayer) {
       return -10;
-    } else if (this.checkForWinner() === DRAW_STATUS) {
+    } else if (winnerCheck === DRAW_STATUS) {
       return 0;
     }
     let bestMoveValue = -100;
@@ -210,25 +206,24 @@ class TicTacToeBoard extends Component {
   }
 
   minScore(board) {
-    if (this.checkForWinner() === this.state.maxPlayer) {
+    const winnerCheck = this.checkForWinner(board);
+    if (winnerCheck === this.state.maxPlayer) {
       return 10;
-    } else if (this.checkForWinner() === this.state.minPlayer) {
+    } else if (winnerCheck === this.state.minPlayer) {
       return -10;
-    } else if (this.checkForWinner() === DRAW_STATUS) {
+    } else if (winnerCheck === DRAW_STATUS) {
       return 0;
     }
     let bestMoveValue = 100;
     for (let i = 0; i < board.length; i += 1) {
       const newBoard = this.validMove(i, this.state.minPlayer, board);
       if (newBoard) {
-        debugger;
         const predictedMoveValue = this.maxScore(newBoard);
         if (predictedMoveValue < bestMoveValue) {
           bestMoveValue = predictedMoveValue;
         }
       }
     }
-    // console.log('Best Move Value(minScore):', bestMoveValue);
     return bestMoveValue;
   }
 
