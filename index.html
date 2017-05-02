@@ -25,7 +25,7 @@
       width: 150px;
       box-sizing: border-box;
       border: 5px solid black;
-      font-size: 5em;
+      font-size: 5rem;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -40,16 +40,33 @@
       border-color: crimson;
     }
 
-    .app-container {
-      justify-content: left;
-      align-items: left;
+    .controls {
+      padding: 1rem;
     }
+
+    .controls button {
+      padding: .5rem;
+      font-size: 1.5rem;
+      margin: .5rem;
+      border-radius: 1.5rem;
+      border-color: #000;
+    }
+
+    .select-player {
+      padding: 1rem;
+      text-align: center;
+    }
+
+    button.active {
+      border: 0.125rem solid red;
+    }
+
   </style>
 </head>
 
 <body>
-  <div id="root"></div>
-  <script src="app.js"></script>
+<div id="root"></div>
+<script src="app.js"></script>
 </body>
 
 </html>

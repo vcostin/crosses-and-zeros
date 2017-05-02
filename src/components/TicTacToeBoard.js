@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 
 const DRAW_STATUS = 'DRAW';
 const [SYMBOL_X, SYMBOL_O] = ['X', 'O'];
@@ -18,10 +18,8 @@ class TicTacToeBoard extends Component {
       winningCombo: [],
     };
 
-    this.handleClick = this.handleClick.bind(this);
     this.handleResetGame = this.handleResetGame.bind(this);
     this.handleSelectPlayer = this.handleSelectPlayer.bind(this);
-    // this.findAiMove = this.findAiMove.bind(this);
   }
 
   componentWillMount() {
@@ -122,14 +120,26 @@ class TicTacToeBoard extends Component {
     });
   }
 
-  handleSelectPlayer(player) {
-    this.setState({
-      currentTurn: player,
-    });
+  handleSelectPlayer(playerSymbol) {
+    const emptyBoardCheck = this.state.board.reduce((concat, cell) => concat + cell, '');
+    if (emptyBoardCheck !== '') {
+      return;
+    }
+    if (playerSymbol === SYMBOL_X) {
+      this.setState({
+        maxPlayer: SYMBOL_X,
+        minPlayer: SYMBOL_O,
+      });
+    } else {
+      this.setState({
+        maxPlayer: SYMBOL_O,
+        minPlayer: SYMBOL_X,
+      });
+    }
   }
 
   gameResults() {
-    const { winner } = this.state;
+    const {winner} = this.state;
     switch (winner) {
       case SYMBOL_X:
       case SYMBOL_O:
@@ -137,7 +147,7 @@ class TicTacToeBoard extends Component {
       case DRAW_STATUS:
         return <h1>{winner}!</h1>;
       default:
-        return null;
+        return <h1>Tic Tac Toe</h1>;
     }
   }
 
@@ -154,7 +164,7 @@ class TicTacToeBoard extends Component {
     const newBoard = this.copyBoard(board);
     if (newBoard[move] === '') {
       newBoard[move] = player;
-      return [...newBoard];
+      return newBoard;
     }
     return null;
   }
@@ -184,17 +194,18 @@ class TicTacToeBoard extends Component {
   }
 
   maxScore(board) {
+    const {maxPlayer, minPlayer} = this.state;
     const winnerCheck = this.checkForWinner(board);
-    if (winnerCheck === this.state.maxPlayer) {
+    if (winnerCheck === maxPlayer) {
       return 10;
-    } else if (winnerCheck === this.state.minPlayer) {
+    } else if (winnerCheck === minPlayer) {
       return -10;
     } else if (winnerCheck === DRAW_STATUS) {
       return 0;
     }
     let bestMoveValue = -100;
     for (let i = 0; i < board.length; i += 1) {
-      const newBoard = this.validMove(i, this.state.maxPlayer, board);
+      const newBoard = this.validMove(i, maxPlayer, board);
       if (newBoard) {
         const predictedMoveValue = this.minScore(newBoard);
         if (predictedMoveValue > bestMoveValue) {
@@ -206,17 +217,18 @@ class TicTacToeBoard extends Component {
   }
 
   minScore(board) {
+    const {maxPlayer, minPlayer} = this.state;
     const winnerCheck = this.checkForWinner(board);
-    if (winnerCheck === this.state.maxPlayer) {
+    if (winnerCheck === maxPlayer) {
       return 10;
-    } else if (winnerCheck === this.state.minPlayer) {
+    } else if (winnerCheck === minPlayer) {
       return -10;
     } else if (winnerCheck === DRAW_STATUS) {
       return 0;
     }
     let bestMoveValue = 100;
     for (let i = 0; i < board.length; i += 1) {
-      const newBoard = this.validMove(i, this.state.minPlayer, board);
+      const newBoard = this.validMove(i, minPlayer, board);
       if (newBoard) {
         const predictedMoveValue = this.maxScore(newBoard);
         if (predictedMoveValue < bestMoveValue) {
@@ -229,24 +241,30 @@ class TicTacToeBoard extends Component {
 
 
   render() {
-    const { board } = this.state;
+    const {board, maxPlayer} = this.state;
     return (
       <div className="app-container">
         {this.gameResults()}
         <div className="board">
-          {board.map((cell, index) => (
+          {board.map((cell, i) => (
             <div
-              key={index}
-              onClick={() => this.handleClick(index)}
-              className={`square ${this.winnerComboHighlight(index)}`}
+              key={i}
+              onClick={this.handleClick.bind(this, i)}
+              className={`square ${this.winnerComboHighlight(i)}`}
             >{cell}</div>
           ))}
         </div>
         <div className="controls">
           <button onClick={this.handleResetGame}>Reset Game</button>
           <div className="select-player">
-            <button onClick={() => this.handleSelectPlayer(SYMBOL_X)}>{SYMBOL_X}</button>
-            <button onClick={() => this.handleSelectPlayer(SYMBOL_O)}>{SYMBOL_O}</button>
+            <button
+              className={maxPlayer === SYMBOL_X ? 'active' : ''}
+              onClick={this.handleSelectPlayer.bind(this, SYMBOL_X)}
+            >{SYMBOL_X}</button>
+            <button
+              className={maxPlayer === SYMBOL_O ? 'active' : ''}
+              onClick={this.handleSelectPlayer.bind(this, SYMBOL_O)}
+            >{SYMBOL_O}</button>
           </div>
         </div>
       </div>
